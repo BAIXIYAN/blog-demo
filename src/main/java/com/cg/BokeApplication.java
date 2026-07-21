@@ -18,8 +18,7 @@ public class BokeApplication {
     public static void main(String[] args) {
         SpringApplication.run(BokeApplication.class, args);
 
-        // 可选：添加启动成功提示
-        System.out.println("✅ 个人博客系统启动成功！");
+        System.out.println("✅ Blog 启动成功！");
         System.out.println("🌐 访问地址: http://localhost:8080");
         System.out.println("🔑 管理员账号: admin / admin123");
     }

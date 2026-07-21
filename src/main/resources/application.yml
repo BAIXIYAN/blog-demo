@@ -1,7 +1,7 @@
 # Spring Boot 4.x 配置
 spring:
   application:
-    name: boke
+    name: blog
 
   # 数据源配置
   datasource:

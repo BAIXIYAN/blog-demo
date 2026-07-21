@@ -13,9 +13,9 @@
     </parent>
 
     <groupId>com.cg</groupId>
-    <artifactId>boke</artifactId>
+    <artifactId>blog</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>boke</name>
+    <name>blog</name>
     <description>个人博客系统</description>
 
     <properties>
