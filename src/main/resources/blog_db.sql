@@ -237,4 +237,20 @@ CREATE TABLE `sys_user`  (
 INSERT INTO `sys_user` VALUES (1, 'admin', '$2a$10$rx999b48QtGUvv/3wpSRSeUdClxEnxr7OYc3j3lXose3YmI7jTR5e', 'admin@cqie.edu.cn', '系统管理员', NULL, 'admin', 1, '2025-12-25 18:24:40', '2025-12-25 23:03:24');
 INSERT INTO `sys_user` VALUES (2, '姚美妍', '$2a$10$XtPYKAlb6mtGu3noB/hTAuogen51vWXVbCt25N0ITKJmgf3nlfagq', '', '姚美妍', '/uploads/avatars/2_1766734952932_6149e129bcb646538887e15baaf21e16.jpg', 'user', 1, '2025-12-25 22:31:37', '2025-12-29 19:55:45');
 
+-- ----------------------------
+-- Table structure for password_reset_token
+-- ----------------------------
+DROP TABLE IF EXISTS `password_reset_token`;
+CREATE TABLE `password_reset_token` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `token` varchar(100) NOT NULL COMMENT '重置令牌',
+  `expire_time` datetime NOT NULL COMMENT '过期时间',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_token` (`token`),
+  KEY `idx_user_id` (`user_id`),
+  CONSTRAINT `fk_reset_token_user` FOREIGN KEY (`user_id`) REFERENCES `sys_user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='密码重置令牌表';
+
 SET FOREIGN_KEY_CHECKS = 1;
