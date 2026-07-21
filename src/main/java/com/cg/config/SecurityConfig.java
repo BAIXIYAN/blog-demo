@@ -37,11 +37,12 @@ public class SecurityConfig {
                                 "/images/**",
                                 "/user/login",
                                 "/user/register",
-                                "/admin/init/**",  // 允许管理员初始化页面公开访问（仅开发环境）
+                                "/admin/init/**",
                                 "/test/**",
-                                "/api/likes/**",   // 允许点赞API访问（Controller内部会处理未登录情况）
-                                "/api/favorites/**", // 允许收藏API访问（Controller内部会处理未登录情况）
-                                "/error"  // 允许错误页面公开访问，避免重定向循环
+                                "/api/likes/**",
+                                "/api/favorites/**",
+                                "/password/**",
+                                "/error"
                         ).permitAll()
                         // 评论功能需要登录
                         .requestMatchers("/comments/**").authenticated()
