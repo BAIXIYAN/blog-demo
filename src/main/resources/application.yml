@@ -1,0 +1,66 @@
+# Spring Boot 4.x 配置
+spring:
+  application:
+    name: boke
+
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/blog_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+
+  # Thymeleaf配置
+  thymeleaf:
+    cache: false  # 开发时关闭缓存
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+
+  # 文件上传
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+
+  # 热部署
+  devtools:
+    restart:
+      enabled: true
+
+# MyBatis-Plus配置
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 控制台打印SQL
+    map-underscore-to-camel-case: true  # 自动驼峰命名
+  global-config:
+    db-config:
+      id-type: auto  # 主键自增
+      logic-delete-field: deleted  # 逻辑删除字段
+      logic-delete-value: 1        # 逻辑已删除值
+      logic-not-delete-value: 0    # 逻辑未删除值
+
+# 日志配置
+logging:
+  level:
+    com.cg: debug
+    org.springframework.security: debug  # 安全框架日志
+  file:
+    name: logs/boke.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 服务器配置（Spring Boot 4.x简化版）
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  # 在Spring Boot 4.x中，编码配置已简化，默认就是UTF-8
+  # 不需要单独配置charset/enabled/force
+
+# Spring Security配置（可选，用于调试）
+# 开发时可以暂时关闭CSRF
+# security:
+#   enabled: false  # 调试时可暂时关闭

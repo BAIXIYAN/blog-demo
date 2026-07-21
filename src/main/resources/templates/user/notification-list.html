@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的消息 - 用户后台</title>
+    <link rel="stylesheet" th:href="@{/css/common.css?v=1.0}">
+    <style>
+        /* 页面特有样式 */
+        .page-header {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            color: #2c3e50;
+        }
+        
+        .notification-list {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        .notification-item {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.3s;
+            position: relative;
+        }
+        
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        
+        .notification-item:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .notification-item.unread {
+            background-color: #f0f7ff;
+            border-left: 4px solid #3498db;
+        }
+        
+        .notification-item.unread:hover {
+            background-color: #e6f3ff;
+        }
+        
+        .notification-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .notification-main {
+            flex: 1;
+        }
+        
+        .notification-text {
+            font-size: 16px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        .notification-meta {
+            display: flex;
+            gap: 15px;
+            color: #999;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        
+        .notification-type {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .notification-type.like {
+            background-color: #ffe6e6;
+            color: #e74c3c;
+        }
+        
+        .notification-type.favorite {
+            background-color: #fff4e6;
+            color: #f39c12;
+        }
+        
+        .notification-actions {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        
+        .btn-mark-read {
+            padding: 6px 16px;
+            background-color: #95a5a6;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-mark-read:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .btn-mark-read:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .unread-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background-color: #e74c3c;
+            color: #fff;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- 使用公共导航栏 -->
+    <header th:replace="common/layout :: navbar"></header>
+    
+    <!-- 主容器（使用公共样式） -->
+    <div class="container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">我的消息</h1>
+                <div style="margin-top: 10px;">
+                    <span class="unread-badge" th:if="${unreadCount > 0}" th:text="'未读：' + ${unreadCount}">未读：0</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button type="button" 
+                        class="btn" 
+                        onclick="markAllAsRead()"
+                        th:disabled="${unreadCount == 0}">
+                    全部标记为已读
+                </button>
+            </div>
+        </div>
+        
+        <div th:if="${message}" class="message message-success" th:text="${message}"></div>
+        <div th:if="${error}" class="message message-error" th:text="${error}"></div>
+        
+        <div class="notification-list">
+            <div th:if="${notifications == null || notifications.isEmpty()}" class="empty-state">
+                <h3>还没有收到任何消息</h3>
+                <p>当有人点赞或收藏您的文章时，您会在这里收到通知</p>
+            </div>
+            
+            <div th:if="${notifications != null && !notifications.isEmpty()}">
+                <div th:each="notification : ${notifications}" 
+                     class="notification-item"
+                     th:classappend="${notification.isRead == 0} ? 'unread'">
+                    <div class="notification-content">
+                        <div class="notification-main">
+                            <div class="notification-text" th:text="${notification.content}">消息内容</div>
+                            <div class="notification-meta">
+                                <span class="notification-type" 
+                                      th:classappend="${notification.type == 'like'} ? 'like' : 'favorite'"
+                                      th:text="${notification.type == 'like'} ? '点赞' : '收藏'">类型</span>
+                                <span th:if="${notification.createTime != null}">
+                                    <span>时间：</span>
+                                    <span th:text="${#temporals.format(notification.createTime, 'yyyy-MM-dd HH:mm')}">2025-12-28</span>
+                                </span>
+                                <a th:href="@{/articles/{id}(id=${notification.articleId})}" 
+                                   style="color: #3498db; text-decoration: none;">
+                                    查看文章 →
+                                </a>
+                            </div>
+                        </div>
+                        <div class="notification-actions">
+                            <button type="button" 
+                                    class="btn-mark-read"
+                                    th:onclick="'markAsRead(' + ${notification.id} + ')'"
+                                    th:disabled="${notification.isRead == 1}"
+                                    th:text="${notification.isRead == 0} ? '标记已读' : '已读'">
+                                标记已读
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 使用公共页脚 -->
+    <footer th:replace="common/layout :: footer"></footer>
+    
+    <!-- 引入公共 JS，实现消息自动消失 -->
+    <script th:src="@{/js/common.js}"></script>
+    
+    <script>
+        function markAsRead(notificationId) {
+            fetch('/user/notification/read/' + notificationId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 更新UI
+                    var item = document.querySelector('[onclick="markAsRead(' + notificationId + ')"]').closest('.notification-item');
+                    item.classList.remove('unread');
+                    var btn = item.querySelector('.btn-mark-read');
+                    btn.disabled = true;
+                    btn.textContent = '已读';
+                    
+                    // 更新未读数量
+                    updateUnreadCount();
+                } else {
+                    alert(data.message || '操作失败');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('操作失败，请重试');
+            });
+        }
+        
+        function markAllAsRead() {
+            if (!confirm('确定要将所有消息标记为已读吗？')) {
+                return;
+            }
+            
+            fetch('/user/notification/read-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 更新所有消息为已读状态
+                    document.querySelectorAll('.notification-item').forEach(item => {
+                        item.classList.remove('unread');
+                        var btn = item.querySelector('.btn-mark-read');
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.textContent = '已读';
+                        }
+                    });
+                    
+                    // 更新未读数量
+                    updateUnreadCount();
+                    
+                    alert('全部标记成功');
+                } else {
+                    alert(data.message || '操作失败');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('操作失败，请重试');
+            });
+        }
+        
+        function updateUnreadCount() {
+            fetch('/user/notification/unread-count', {
+                method: 'GET',
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                var badge = document.querySelector('.unread-badge');
+                if (data.count > 0) {
+                    if (badge) {
+                        badge.textContent = '未读：' + data.count;
+                    } else {
+                        var headerDiv = document.querySelector('.page-header > div');
+                        var badgeDiv = document.createElement('div');
+                        badgeDiv.style.marginTop = '10px';
+                        badgeDiv.innerHTML = '<span class="unread-badge">未读：' + data.count + '</span>';
+                        headerDiv.appendChild(badgeDiv);
+                    }
+                } else {
+                    if (badge) {
+                        badge.remove();
+                    }
+                    var markAllBtn = document.querySelector('.header-actions button');
+                    if (markAllBtn) {
+                        markAllBtn.disabled = true;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
+

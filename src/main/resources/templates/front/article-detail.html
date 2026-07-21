@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${article.title}">文章详情</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: #fff;
+            padding: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            background-color: #e9ecef;
+        }
+        
+        .article-container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .article-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .article-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            line-height: 1.3;
+        }
+        
+        .article-meta {
+            display: flex;
+            gap: 20px;
+            color: #666;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        
+        .article-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .article-category {
+            display: inline-block;
+            padding: 4px 12px;
+            background-color: #3498db;
+            color: #fff;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .article-content {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #444;
+            margin-bottom: 30px;
+        }
+        
+        .article-content p {
+            margin-bottom: 15px;
+        }
+        
+        .comments-section {
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .comments-title {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .comment-form {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .comment-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+        
+        .comment-form textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .comment-form .btn-submit {
+            margin-top: 10px;
+            padding: 10px 24px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .comment-form .btn-submit:hover {
+            background-color: #2980b9;
+        }
+        
+        .comment-list {
+            list-style: none;
+        }
+        
+        .comment-item {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 15px;
+        }
+        
+        .comment-item:last-child {
+            border-bottom: none;
+        }
+        
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .comment-author {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .comment-time {
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .comment-content {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        /* 回复评论样式 */
+        .comment-reply-to {
+            color: #3498db;
+            font-size: 13px;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .comment-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .comment-reply-btn {
+            background: none;
+            border: none;
+            color: #3498db;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        
+        .comment-reply-btn:hover {
+            background-color: #f0f7ff;
+        }
+        
+        .reply-form {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        .reply-form.active {
+            display: block;
+        }
+        
+        .reply-form textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+            margin-bottom: 10px;
+        }
+        
+        .reply-form textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .reply-form-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .reply-form-actions button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .reply-submit {
+            background-color: #3498db;
+            color: #fff;
+        }
+        
+        .reply-submit:hover {
+            background-color: #2980b9;
+        }
+        
+        .reply-cancel {
+            background-color: #e9ecef;
+            color: #666;
+        }
+        
+        .reply-cancel:hover {
+            background-color: #dee2e6;
+        }
+        
+        .login-prompt {
+            text-align: center;
+            padding: 20px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            color: #856404;
+            margin-bottom: 20px;
+        }
+        
+        .login-prompt a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .login-prompt a:hover {
+            text-decoration: underline;
+        }
+        
+        .back-links {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            padding: 10px 0;
+        }
+        
+        .back-links a, .back-links button {
+            color: #3498db;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px 10px;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+        
+        .back-links a:hover, .back-links button:hover {
+            text-decoration: underline;
+            color: #2980b9;
+        }
+        
+        .back-links .divider {
+            color: #ccc;
+            margin: 0 5px;
+        }
+        
+        /* 点赞按钮样式 */
+        .like-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .like-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background-color: #fff;
+            border: 2px solid #3498db;
+            border-radius: 25px;
+            color: #3498db;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        
+        .like-btn:hover {
+            background-color: #f0f7ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.2);
+        }
+        
+        .like-btn.liked {
+            background-color: #3498db;
+            color: #fff;
+            border-color: #3498db;
+        }
+        
+        .like-btn.liked:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        .like-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .like-count {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .like-icon {
+            font-size: 20px;
+        }
+        
+        /* 收藏按钮样式 */
+        .favorite-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background-color: #fff;
+            border: 2px solid #e74c3c;
+            border-radius: 25px;
+            color: #e74c3c;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        
+        .favorite-btn:hover {
+            background-color: #fff5f5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.2);
+        }
+        
+        .favorite-btn.favorited {
+            background-color: #e74c3c;
+            color: #fff;
+            border-color: #e74c3c;
+        }
+        
+        .favorite-btn.favorited:hover {
+            background-color: #c0392b;
+            border-color: #c0392b;
+        }
+        
+        .favorite-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .favorite-count {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .favorite-icon {
+            font-size: 20px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">我的博客</div>
+                <ul class="nav-links">
+                    <li><a href="/">首页</a></li>
+                    <!-- 未登录时显示 -->
+                    <li sec:authorize="!isAuthenticated()"><a href="/user/login">登录</a></li>
+                    <li sec:authorize="!isAuthenticated()"><a href="/user/register">注册</a></li>
+                    <!-- 登录后显示 -->
+                    <li sec:authorize="isAuthenticated()">
+                        <a href="/user/article/list">我的文章</a>
+                    </li>
+                    <li sec:authorize="isAuthenticated()">
+                        <a href="/user/comment/list">我的评论</a>
+                    </li>
+                    <li sec:authorize="hasRole('ADMIN')">
+                        <a href="/admin/index">管理员后台</a>
+                    </li>
+                    <li sec:authorize="isAuthenticated()">
+                        <a href="/user/logout">退出</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="back-links">
+            <button onclick="goBack()" type="button">← 返回上一页</button>
+            <span class="divider" th:if="${from != null}">|</span>
+            <a th:if="${from == 'user'}" th:href="@{/user/comment/list}">返回我的评论</a>
+            <a th:if="${from == 'admin'}" th:href="@{/admin/comment/list}">返回评论管理</a>
+            <span class="divider" th:if="${from == null}">|</span>
+            <a th:if="${from == null}" href="/">返回首页</a>
+        </div>
+        
+        <script th:inline="javascript">
+            function goBack() {
+                // 如果有来源页面，优先返回来源页面
+                var from = /*[[${from}]]*/ null;
+                if (from === 'user') {
+                    window.location.href = '/user/comment/list';
+                } else if (from === 'admin') {
+                    window.location.href = '/admin/comment/list';
+                } else {
+                    // 使用浏览器历史记录返回
+                    if (window.history.length > 1) {
+                        history.back();
+                    } else {
+                        window.location.href = '/';
+                    }
+                }
+            }
+            
+            // 点赞功能
+            function toggleLike(articleId) {
+                var likeBtn = document.getElementById('likeBtn');
+                var likeCount = document.getElementById('likeCount');
+                var likeText = likeBtn.querySelector('.like-text');
+                
+                // 禁用按钮，防止重复点击
+                likeBtn.disabled = true;
+                
+                // 发送点赞请求
+                fetch('/api/likes/toggle?articleId=' + articleId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    credentials: 'same-origin'  // 包含cookie，用于身份验证
+                })
+                .then(response => {
+                    // 检查响应类型
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        // 如果返回的不是JSON，可能是HTML（登录页面）
+                        return response.text().then(text => {
+                            throw new Error('服务器返回了非JSON响应，可能需要登录');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // 更新按钮状态
+                        if (data.liked) {
+                            likeBtn.classList.add('liked');
+                            likeText.textContent = '已点赞';
+                        } else {
+                            likeBtn.classList.remove('liked');
+                            likeText.textContent = '点赞';
+                        }
+                        
+                        // 更新点赞数
+                        likeCount.textContent = data.likeCount;
+                    } else {
+                        // 如果未登录，提示用户登录
+                        if (data.message && data.message.includes('登录')) {
+                            if (confirm('请先登录才能点赞，是否前往登录页面？')) {
+                                window.location.href = '/user/login';
+                            }
+                        } else {
+                            alert(data.message || '操作失败，请稍后重试');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // 如果错误信息包含登录提示，引导用户登录
+                    if (error.message && error.message.includes('登录')) {
+                        if (confirm('请先登录才能点赞，是否前往登录页面？')) {
+                            window.location.href = '/user/login';
+                        }
+                    } else {
+                        alert('网络错误，请稍后重试');
+                    }
+                })
+                .finally(() => {
+                    // 恢复按钮
+                    likeBtn.disabled = false;
+                });
+            }
+            
+            // 收藏功能
+            function toggleFavorite(articleId) {
+                var favoriteBtn = document.getElementById('favoriteBtn');
+                var favoriteCount = document.getElementById('favoriteCount');
+                var favoriteText = favoriteBtn.querySelector('.favorite-text');
+                
+                // 禁用按钮，防止重复点击
+                favoriteBtn.disabled = true;
+                
+                // 发送收藏请求
+                fetch('/api/favorites/toggle?articleId=' + articleId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        return response.text().then(text => {
+                            throw new Error('服务器返回了非JSON响应，可能需要登录');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // 更新按钮状态
+                        if (data.favorited) {
+                            favoriteBtn.classList.add('favorited');
+                            favoriteText.textContent = '已收藏';
+                        } else {
+                            favoriteBtn.classList.remove('favorited');
+                            favoriteText.textContent = '收藏';
+                        }
+                        
+                        // 更新收藏数
+                        favoriteCount.textContent = data.favoriteCount;
+                    } else {
+                        if (data.message && data.message.includes('登录')) {
+                            if (confirm('请先登录才能收藏，是否前往登录页面？')) {
+                                window.location.href = '/user/login';
+                            }
+                        } else {
+                            alert(data.message || '操作失败，请稍后重试');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    if (error.message && error.message.includes('登录')) {
+                        if (confirm('请先登录才能收藏，是否前往登录页面？')) {
+                            window.location.href = '/user/login';
+                        }
+                    } else {
+                        alert('网络错误，请稍后重试');
+                    }
+                })
+                .finally(() => {
+                    favoriteBtn.disabled = false;
+                });
+            }
+            
+            // 显示回复表单
+            function showReplyForm(commentId) {
+                // 先隐藏所有其他回复表单
+                var allForms = document.querySelectorAll('.reply-form');
+                allForms.forEach(function(form) {
+                    form.classList.remove('active');
+                });
+                
+                // 显示当前回复表单
+                var replyForm = document.getElementById('replyForm' + commentId);
+                if (replyForm) {
+                    replyForm.classList.add('active');
+                    var textarea = replyForm.querySelector('textarea');
+                    if (textarea) {
+                        textarea.focus();
+                        // 滚动到表单位置
+                        replyForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                } else {
+                    console.error('找不到回复表单，commentId:', commentId);
+                }
+            }
+            
+            // 隐藏回复表单
+            function hideReplyForm(commentId) {
+                var replyForm = document.getElementById('replyForm' + commentId);
+                if (replyForm) {
+                    replyForm.classList.remove('active');
+                    var textarea = replyForm.querySelector('textarea');
+                    if (textarea) {
+                        textarea.value = '';
+                    }
+                }
+            }
+        </script>
+        
+        <!-- 文章内容 -->
+        <div class="article-container">
+            <div class="article-header">
+                <h1 class="article-title" th:text="${article.title}">文章标题</h1>
+                <div class="article-meta">
+                    <span>
+                        <span>作者：</span>
+                        <span th:text="${article.authorName != null ? article.authorName : '未知'}">作者</span>
+                    </span>
+                    <span th:if="${article.publishTime != null}">
+                        <span>发布时间：</span>
+                        <span th:text="${#temporals.format(article.publishTime, 'yyyy-MM-dd HH:mm')}">2025-12-25</span>
+                    </span>
+                    <span>
+                        <span>浏览量：</span>
+                        <span th:text="${article.viewCount != null ? article.viewCount : 0}">0</span>
+                    </span>
+                    <span class="article-category" th:text="${article.categoryName != null ? article.categoryName : '未分类'}">分类</span>
+                </div>
+            </div>
+            
+            <div class="article-content" th:utext="${article.content}">
+                文章内容...
+            </div>
+            
+            <!-- 点赞和收藏区域 -->
+            <div class="action-buttons">
+                <div class="like-section" style="margin: 0; padding: 0; border: none;">
+                    <button type="button" 
+                            class="like-btn" 
+                            th:classappend="${article.isLiked != null && article.isLiked} ? 'liked'"
+                            th:onclick="'toggleLike(' + ${article.id} + ')'"
+                            id="likeBtn">
+                        <span class="like-icon">👍</span>
+                        <span class="like-text" th:text="${article.isLiked != null && article.isLiked} ? '已点赞' : '点赞'">点赞</span>
+                    </button>
+                    <span class="like-count" id="likeCount" th:text="${article.likeCount != null ? article.likeCount : 0}">0</span>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" 
+                            class="favorite-btn" 
+                            th:classappend="${article.isFavorited != null && article.isFavorited} ? 'favorited'"
+                            th:onclick="'toggleFavorite(' + ${article.id} + ')'"
+                            id="favoriteBtn">
+                        <span class="favorite-icon">⭐</span>
+                        <span class="favorite-text" th:text="${article.isFavorited != null && article.isFavorited} ? '已收藏' : '收藏'">收藏</span>
+                    </button>
+                    <span class="favorite-count" id="favoriteCount" th:text="${article.favoriteCount != null ? article.favoriteCount : 0}">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 评论区域 -->
+        <div class="comments-section">
+            <h2 class="comments-title">评论 (<span th:text="${comments != null ? comments.size() : 0}">0</span>)</h2>
+            
+            <!-- 发表评论表单 -->
+            <div class="comment-form" sec:authorize="isAuthenticated()">
+                <form th:action="@{/comments/add}" method="post">
+                    <input type="hidden" name="articleId" th:value="${article.id}">
+                    <textarea name="content" placeholder="写下你的评论..." required></textarea>
+                    <button type="submit" class="btn-submit">发表评论</button>
+                </form>
+            </div>
+            
+            <div class="login-prompt" sec:authorize="!isAuthenticated()">
+                请 <a href="/user/login">登录</a> 后发表评论
+            </div>
+            
+            <!-- 评论列表 -->
+            <ul class="comment-list" th:if="${comments != null && !comments.isEmpty()}">
+                <li th:each="comment : ${comments}" class="comment-item">
+                    <div class="comment-header">
+                        <span class="comment-author" th:text="${comment.nickname != null ? comment.nickname : (comment.username != null ? comment.username : '匿名用户')}">用户名</span>
+                        <span class="comment-time" th:text="${comment.formatCreateTime}">2025-12-25 12:00:00</span>
+                    </div>
+                    <!-- 如果是回复，显示回复的对象 -->
+                    <div class="comment-reply-to" th:if="${comment.replyToNickname != null || comment.replyToUsername != null}">
+                        回复 <span th:text="${comment.replyToNickname != null ? comment.replyToNickname : comment.replyToUsername}">用户名</span>：
+                    </div>
+                    <div class="comment-content" th:text="${comment.content}">评论内容</div>
+                    
+                    <!-- 评论操作按钮 -->
+                    <div class="comment-actions" sec:authorize="isAuthenticated()">
+                        <button type="button" 
+                                class="comment-reply-btn" 
+                                th:onclick="'showReplyForm(' + ${comment.id} + ')'">
+                            回复
+                        </button>
+                    </div>
+                    
+                    <!-- 回复表单 -->
+                    <div class="reply-form" th:id="'replyForm' + ${comment.id}">
+                        <form th:action="@{/comments/add}" method="post">
+                            <input type="hidden" name="articleId" th:value="${article.id}">
+                            <input type="hidden" name="parentId" th:value="${comment.id}">
+                            <textarea name="content" placeholder="写下你的回复..." required></textarea>
+                            <div class="reply-form-actions">
+                                <button type="submit" class="reply-submit">发表回复</button>
+                                <button type="button" class="reply-cancel" th:onclick="'hideReplyForm(' + ${comment.id} + ')'">取消</button>
+                            </div>
+                        </form>
+                    </div>
+                </li>
+            </ul>
+            
+            <div th:if="${comments == null || comments.isEmpty()}" style="text-align: center; padding: 40px; color: #999;">
+                暂无评论，快来发表第一条评论吧！
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

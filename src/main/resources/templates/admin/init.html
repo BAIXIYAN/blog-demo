@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员账号初始化</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            padding: 20px;
+        }
+        
+        .init-card {
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .title {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .message {
+            padding: 12px 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            transition: opacity 0.3s ease-out;
+        }
+        
+        .message-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .info-box {
+            background-color: #e7f3ff;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .info-box h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .info-box p {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+        
+        .status-ok {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .back-link a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="init-card">
+            <h1 class="title">管理员账号初始化</h1>
+            <p class="subtitle">创建或重置管理员账号</p>
+            
+            <div th:if="${message}" class="message message-success" th:text="${message}"></div>
+            <div th:if="${error}" class="message message-error" th:text="${error}"></div>
+            
+            <div class="info-box" th:if="${adminExists}">
+                <h4>当前管理员状态</h4>
+                <p>用户名：admin</p>
+                <p>状态：
+                    <span th:if="${adminStatus == 1}" class="status-badge status-ok">正常</span>
+                    <span th:if="${adminStatus != 1}" class="status-badge status-error">已禁用</span>
+                </p>
+                <p>角色：
+                    <span th:text="${adminRole}">admin</span>
+                </p>
+                <p style="margin-top: 10px; color: #e74c3c; font-weight: 500;">
+                    ⚠️ 如果无法登录，请使用下面的表单重置密码
+                </p>
+            </div>
+            
+            <div class="info-box" th:if="${adminExists == null or adminExists == false}">
+                <h4>提示</h4>
+                <p>系统中不存在管理员账号，请创建新的管理员账号。</p>
+            </div>
+            
+            <form th:action="@{/admin/init/create}" method="post">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" name="username" value="admin" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">新密码 <span style="color: red;">*</span></label>
+                    <input type="password" id="password" name="password" required placeholder="请输入新密码">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">邮箱（可选）</label>
+                    <input type="email" id="email" name="email" placeholder="admin@example.com">
+                </div>
+                
+                <button type="submit" class="btn" th:text="${adminExists != null and adminExists} ? '重置管理员密码' : '创建管理员账号'">
+                    创建管理员账号
+                </button>
+            </form>
+            
+            <div class="back-link">
+                <a href="/user/login">返回登录页面</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 引入公共 JS，实现消息自动消失 -->
+    <script th:src="@{/js/common.js}"></script>
+</body>
+</html>

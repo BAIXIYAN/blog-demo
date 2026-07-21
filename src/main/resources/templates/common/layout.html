@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} ?: '个人博客系统'">个人博客系统</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+</head>
+
+<body>
+    <!-- 公共头部导航栏 -->
+    <header th:fragment="navbar">
+        <div class="container">
+            <nav>
+                <div class="logo">我的博客</div>
+                <ul class="nav-links">
+                    <li>
+                        <a href="/">首页</a>
+                    </li>
+                    <!-- 未登录时显示 -->
+                    <li sec:authorize="!isAuthenticated()">
+                        <a href="/user/login">登录</a>
+                    </li>
+                    <li sec:authorize="!isAuthenticated()">
+                        <a href="/user/register">注册</a>
+                    </li>
+                    <!-- 登录后显示 -->
+                    <li sec:authorize="isAuthenticated()">
+                        <a href="/user/article/list">我的文章</a>
+                    </li>
+                    <li sec:authorize="isAuthenticated()">
+                        <a href="/user/comment/list">我的评论</a>
+                    </li>
+                    <li sec:authorize="isAuthenticated()">
+                        <a href="/user/favorite/list">我的</a>
+                    </li>
+                    <li sec:authorize="isAuthenticated()">
+                        <a href="/user/notification/list" id="notificationLink" style="position: relative;">
+                            消息
+                            <span id="unreadBadge" style="display: none; position: absolute; top: -5px; right: -10px; background: #e74c3c; color: #fff; border-radius: 10px; padding: 2px 6px; font-size: 11px; min-width: 18px; text-align: center;">0</span>
+                        </a>
+                    </li>
+                    <li sec:authorize="isAuthenticated()">
+                        <a href="/user/profile">个人资料</a>
+                    </li>
+                    <li sec:authorize="hasRole('ADMIN')">
+                        <a href="/admin/index">管理员后台</a>
+                    </li>
+                    <li sec:authorize="isAuthenticated()">
+                        <a href="/user/logout">退出</a>
+                    </li>
+                </ul>
+                
+                <!-- 导航高亮脚本 -->
+                <script>
+                    (function() {
+                        var currentPath = window.location.pathname;
+                        var navLinks = document.querySelectorAll('.nav-links a');
+                        
+                        navLinks.forEach(function(link) {
+                            var linkPath = link.getAttribute('href');
+                            if (linkPath && linkPath !== '#') {
+                                // 首页特殊处理
+                                if (linkPath === '/' || linkPath === '/index') {
+                                    if (currentPath === '/' || currentPath.startsWith('/search') || 
+                                        (currentPath.startsWith('/index') && !currentPath.includes('/user') && !currentPath.includes('/admin'))) {
+                                        link.classList.add('active');
+                                    }
+                                }
+                                // 其他页面
+                                else if (currentPath.startsWith(linkPath) || 
+                                         (linkPath.includes('/user/article') && currentPath.includes('/user/article')) ||
+                                         (linkPath.includes('/user/comment') && currentPath.includes('/user/comment')) ||
+                                         // 收藏/点赞页面：/user/favorite/list 和 /user/favorite/like 都应该高亮"我的收藏"菜单
+                                         ((linkPath === '/user/favorite/list' || linkPath.includes('/user/favorite')) && 
+                                          currentPath.startsWith('/user/favorite')) ||
+                                         (linkPath.includes('/user/notification') && currentPath.startsWith('/user/notification')) ||
+                                         (linkPath.includes('/user/profile') && currentPath.includes('/user/profile')) ||
+                                         (linkPath.includes('/user/login') && currentPath.includes('/user/login')) ||
+                                         (linkPath.includes('/user/register') && currentPath.includes('/user/register')) ||
+                                         (linkPath.includes('/admin') && currentPath.includes('/admin'))) {
+                                    link.classList.add('active');
+                                }
+                            }
+                        });
+                    })();
+                </script>
+                
+                <!-- 加载未读消息数量 -->
+                <script sec:authorize="isAuthenticated()">
+                    (function() {
+                        fetch('/user/notification/unread-count', {
+                            method: 'GET',
+                            credentials: 'same-origin'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            var badge = document.getElementById('unreadBadge');
+                            if (badge && data.count > 0) {
+                                badge.textContent = data.count > 99 ? '99+' : data.count;
+                                badge.style.display = 'inline-block';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Failed to load unread count:', error);
+                        });
+                    })();
+                </script>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 公共主容器 -->
+    <div th:fragment="mainContainer" class="container">
+        <!-- 页面具体内容将通过th:replace插入此处 -->
+    </div>
+
+    <!-- 公共页脚 -->
+    <footer th:fragment="footer" style="background: #fff; padding: 20px 0; margin-top: 50px; text-align: center; color: #666; border-top: 1px solid #e9ecef;">
+        <div class="container">
+            <p>© 2025 个人博客系统 - 版权所有</p>
+        </div>
+    </footer>
+</body>
+</html>
+

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的文章 - 用户后台</title>
+    <link rel="stylesheet" th:href="@{/css/common.css?v=1.0}">
+    <style>
+        /* 页面特有样式 */
+        .page-header {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            color: #2c3e50;
+        }
+        
+        .article-table {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <!-- 使用公共导航栏 -->
+    <header th:replace="common/layout :: navbar"></header>
+    
+    <!-- 主容器（使用公共样式） -->
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">我的文章</h1>
+            <a href="/user/article/add" class="btn">发布新文章</a>
+        </div>
+        
+        <div th:if="${message}" class="message message-success" th:text="${message}"></div>
+        <div th:if="${error}" class="message message-error" th:text="${error}"></div>
+        
+        <div class="article-table">
+            <div th:if="${articles == null || articles.isEmpty()}" class="empty-state">
+                <h3>还没有发布过文章</h3>
+                <p style="margin-top: 10px;"><a href="/user/article/add" class="btn">立即发布</a></p>
+            </div>
+            
+            <table th:if="${articles != null && !articles.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th>标题</th>
+                        <th>分类</th>
+                        <th>状态</th>
+                        <th>浏览量</th>
+                        <th>发布时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="article : ${articles}">
+                        <td>
+                            <a th:href="@{/articles/{id}(id=${article.id})}" 
+                               th:text="${article.title}"
+                               style="text-decoration: none; color: #3498db;"></a>
+                        </td>
+                        <td th:text="${article.categoryName != null ? article.categoryName : '未分类'}">分类</td>
+                        <td>
+                            <span th:if="${article.status == 0}" class="status-badge status-pending">待审核</span>
+                            <span th:if="${article.status == 1}" class="status-badge status-published">已发布</span>
+                            <span th:if="${article.status == 2}" class="status-badge status-rejected">已拒绝</span>
+                        </td>
+                        <td th:text="${article.viewCount != null ? article.viewCount : 0}">0</td>
+                        <td th:if="${article.publishTime != null}" 
+                            th:text="${#temporals.format(article.publishTime, 'yyyy-MM-dd HH:mm')}">2025-12-25</td>
+                        <td th:if="${article.publishTime == null}" style="color: #999;">未发布</td>
+                        <td>
+                            <div class="action-buttons">
+                                <a th:href="@{/user/article/detail/{id}(id=${article.id})}" 
+                                   class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">详情</a>
+                                <a th:href="@{/user/article/edit/{id}(id=${article.id})}" 
+                                   class="btn" style="padding: 6px 12px; font-size: 12px;">编辑</a>
+                                <form th:action="@{/user/article/delete/{id}(id=${article.id})}" 
+                                      method="post" 
+                                      style="display: inline;"
+                                      onsubmit="return confirm('确定要删除这篇文章吗？');">
+                                    <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;">删除</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- 使用公共页脚 -->
+    <footer th:replace="common/layout :: footer"></footer>
+    
+    <!-- 引入公共 JS，实现消息自动消失 -->
+    <script th:src="@{/js/common.js}"></script>
+</body>
+</html>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章详情 - 用户后台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: #fff;
+            padding: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            background-color: #e9ecef;
+        }
+        
+        .article-container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .article-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .article-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .article-meta {
+            display: flex;
+            gap: 20px;
+            color: #666;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        
+        .article-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-published {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .article-content {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #444;
+            margin-bottom: 30px;
+        }
+        
+        .stats-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .stats-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .comments-section {
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .comments-title {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .comment-item {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 10px;
+        }
+        
+        .comment-item:last-child {
+            border-bottom: none;
+        }
+        
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .comment-author {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .comment-time {
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .comment-content {
+            color: #666;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .action-buttons {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">我的博客</div>
+                <ul class="nav-links">
+                    <li><a href="/">首页</a></li>
+                    <li><a href="/user/article/list">我的文章</a></li>
+                    <li><a href="/user/comment/list">我的评论</a></li>
+                    <li sec:authorize="hasRole('ADMIN')">
+                        <a href="/admin/index">管理员后台</a>
+                    </li>
+                    <li><a href="/user/logout">退出</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="article-container">
+            <div class="article-header">
+                <h1 class="article-title" th:text="${article.title}">文章标题</h1>
+                <div class="article-meta">
+                    <span>
+                        <span>分类：</span>
+                        <span th:text="${article.categoryName != null ? article.categoryName : '未分类'}">分类</span>
+                    </span>
+                    <span>
+                        <span>状态：</span>
+                        <span th:if="${article.status == 0}" class="status-badge status-pending">待审核</span>
+                        <span th:if="${article.status == 1}" class="status-badge status-published">已发布</span>
+                        <span th:if="${article.status == 2}" class="status-badge status-rejected">已拒绝</span>
+                    </span>
+                    <span th:if="${article.publishTime != null}">
+                        <span>发布时间：</span>
+                        <span th:text="${#temporals.format(article.publishTime, 'yyyy-MM-dd HH:mm')}">2025-12-25</span>
+                    </span>
+                    <span>
+                        <span>创建时间：</span>
+                        <span th:text="${#temporals.format(article.createTime, 'yyyy-MM-dd HH:mm')}">2025-12-25</span>
+                    </span>
+                </div>
+            </div>
+            
+            <div class="article-content" th:utext="${article.content}">
+                文章内容...
+            </div>
+            
+            <div class="action-buttons">
+                <a th:href="@{/user/article/edit/{id}(id=${article.id})}" class="btn">编辑文章</a>
+                <a href="/user/article/list" class="btn btn-secondary">返回列表</a>
+            </div>
+        </div>
+        
+        <div class="stats-section">
+            <h2 class="stats-title">文章数据统计</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" th:text="${article.viewCount != null ? article.viewCount : 0}">0</div>
+                    <div class="stat-label">浏览量</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" th:text="${comments != null ? comments.size() : 0}">0</div>
+                    <div class="stat-label">评论数</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="comments-section">
+            <h2 class="comments-title">评论列表 (<span th:text="${comments != null ? comments.size() : 0}">0</span>)</h2>
+            
+            <div th:if="${comments == null || comments.isEmpty()}" style="text-align: center; padding: 40px; color: #999;">
+                暂无评论
+            </div>
+            
+            <div th:if="${comments != null && !comments.isEmpty()}">
+                <div th:each="comment : ${comments}" class="comment-item">
+                    <div class="comment-header">
+                        <span class="comment-author" th:text="${comment.username != null ? comment.username : '匿名用户'}">用户名</span>
+                        <span class="comment-time" th:text="${comment.formatCreateTime}">2025-12-25 12:00:00</span>
+                    </div>
+                    <div class="comment-content" th:text="${comment.content}">评论内容</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

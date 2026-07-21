@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的评论 - 用户后台</title>
+    <link rel="stylesheet" th:href="@{/css/common.css?v=1.0}">
+    <style>
+        /* 页面特有样式 */
+        .page-header {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            color: #2c3e50;
+        }
+        
+        .comment-table {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .comment-content {
+            max-width: 400px;
+            word-break: break-word;
+        }
+        
+        .article-link {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .article-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- 使用公共导航栏 -->
+    <header th:replace="common/layout :: navbar"></header>
+    
+    <!-- 主容器（使用公共样式） -->
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">我的评论</h1>
+        </div>
+        
+        <div th:if="${message}" class="message message-success" th:text="${message}"></div>
+        <div th:if="${error}" class="message message-error" th:text="${error}"></div>
+        
+        <div class="comment-table">
+            <div th:if="${comments == null || comments.isEmpty()}" class="empty-state">
+                <h3>暂无评论</h3>
+                <p>你还没有发表过任何评论</p>
+            </div>
+            
+            <table th:if="${comments != null && !comments.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>评论内容</th>
+                        <th>所属文章</th>
+                        <th>发表时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="comment : ${comments}">
+                        <td th:text="${comment.id}">1</td>
+                        <td class="comment-content" th:text="${comment.content}">评论内容</td>
+                        <td>
+                            <a th:href="@{'/articles/' + ${comment.articleId} + '?from=user'}" 
+                               class="article-link"
+                               th:text="${comment.articleTitle != null ? comment.articleTitle : '文章已删除'}">文章标题</a>
+                        </td>
+                        <td th:text="${comment.createTime != null ? #temporals.format(comment.createTime, 'yyyy-MM-dd HH:mm') : '-'}">2025-12-25</td>
+                        <td>
+                            <form th:action="@{/user/comment/delete/{id}(id=${comment.id})}" 
+                                  method="post" 
+                                  style="display: inline;"
+                                  onsubmit="return confirm('确定要删除这条评论吗？');">
+                                <button type="submit" class="btn btn-danger">删除</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- 使用公共页脚 -->
+    <footer th:replace="common/layout :: footer"></footer>
+    
+    <!-- 引入公共 JS，实现消息自动消失 -->
+    <script th:src="@{/js/common.js}"></script>
+</body>
+</html>
+

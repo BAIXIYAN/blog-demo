@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博客首页</title>
+    <link rel="stylesheet" th:href="@{/css/common.css?v=1.0}">
+    <style>
+        /* 首页特有样式 */
+        body {
+            scroll-behavior: smooth;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        /* 侧边栏优化 - 使用sticky定位固定在左侧 */
+        .sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 28px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 24px;
+            align-self: flex-start;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            border: 1px solid rgba(52, 152, 219, 0.1);
+            z-index: 10;
+        }
+
+        /* 文章列表区域 */
+        .article-list {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h3 {
+            color: #2c3e50;
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 3px solid;
+            border-image: linear-gradient(90deg, #3498db, #2980b9) 1;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .category-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .category-list li {
+            margin-bottom: 6px;
+        }
+
+        .category-list a {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            text-decoration: none;
+            color: #555;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 15px;
+            border-left: 4px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category-list a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, rgba(52, 152, 219, 0.1), transparent);
+            transition: width 0.3s ease;
+        }
+
+        .category-list a:hover {
+            background: linear-gradient(90deg, #f0f7ff 0%, #ffffff 100%);
+            color: #3498db;
+            border-left-color: #3498db;
+            padding-left: 20px;
+            transform: translateX(4px);
+        }
+
+        .category-list a:hover::before {
+            width: 100%;
+        }
+
+        .category-list a.active {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: #fff;
+            border-left-color: #1f5f8b;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        /* 文章卡片优化 */
+        .article-item {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .article-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #3498db, #2980b9);
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.4s ease;
+        }
+
+        .article-item:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            transform: translateY(-4px);
+            border-color: rgba(52, 152, 219, 0.2);
+        }
+
+        .article-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .article-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 14px;
+            line-height: 1.4;
+        }
+
+        .article-title a {
+            text-decoration: none;
+            color: #2c3e50;
+            transition: all 0.3s ease;
+            background: linear-gradient(120deg, transparent 0%, transparent 0%);
+            background-size: 200% 2px;
+            background-position: 0% 100%;
+            background-repeat: no-repeat;
+        }
+
+        .article-title a:hover {
+            color: #3498db;
+            background-position: 100% 100%;
+            background-image: linear-gradient(120deg, #3498db 0%, #3498db 100%);
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 24px;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .article-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .article-meta span:hover {
+            background: #f8f9fa;
+            color: #3498db;
+        }
+
+        .article-summary {
+            color: #666;
+            line-height: 1.9;
+            margin-bottom: 20px;
+            font-size: 15px;
+        }
+
+        .article-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 18px;
+            border-top: 2px solid #f0f0f0;
+            margin-top: 8px;
+        }
+
+        .article-category {
+            display: inline-block;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+            color: #495057;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .article-category:hover {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        .article-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-read {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-read::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-read:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-read:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-read:active {
+            transform: translateY(0);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #999;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 12px;
+            color: #666;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        /* 搜索框优化 */
+        .search-box {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+            border: 1px solid rgba(52, 152, 219, 0.1);
+        }
+
+        .search-form {
+            display: flex;
+            gap: 12px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .search-input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .search-btn {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .search-result-info {
+            text-align: center;
+            margin-top: 18px;
+            color: #666;
+            font-size: 15px;
+        }
+
+        .search-result-info strong {
+            color: #3498db;
+            font-weight: 600;
+        }
+
+        /* 分页样式优化 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 40px;
+            padding: 20px 0;
+        }
+
+        .pagination a,
+        .pagination span.current,
+        .pagination span.disabled {
+            display: inline-block;
+            padding: 8px 14px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+            min-width: 38px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        /* 排除容器span的边框和样式 */
+        .pagination > span {
+            border: none;
+            padding: 0;
+            display: inline;
+        }
+
+        /* 确保容器span内的a和span正常显示 */
+        .pagination > span > a,
+        .pagination > span > span {
+            display: inline-block;
+            padding: 8px 14px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+            min-width: 38px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .pagination a:hover {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: #fff;
+            border-color: #3498db;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .pagination .current {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: #fff;
+            border-color: #3498db;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .pagination .disabled {
+            color: #999;
+            cursor: not-allowed;
+            background-color: #f5f5f5;
+            border-color: #e9ecef;
+        }
+
+        .pagination .disabled:hover {
+            background-color: #f5f5f5;
+            color: #999;
+            border-color: #e9ecef;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .pagination-info {
+            text-align: center;
+            color: #666;
+            font-size: 15px;
+            margin-top: 12px;
+            font-weight: 500;
+        }
+
+        /* 排序选择器样式优化 */
+        .sort-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid rgba(52, 152, 219, 0.1);
+        }
+
+        .sort-controls .sort-label {
+            color: #495057;
+            font-size: 15px;
+            margin-right: 12px;
+            font-weight: 600;
+        }
+
+        .sort-options {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sort-option {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #495057;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .sort-option:hover {
+            background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+            border-color: #3498db;
+            color: #3498db;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+        }
+
+        .sort-option.active {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: #fff;
+            border-color: #3498db;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        }
+
+        /* 返回顶部按钮 */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(52, 152, 219, 0.5);
+        }
+
+        .back-to-top:active {
+            transform: translateY(-2px);
+        }
+
+        /* 响应式布局 */
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                min-width: auto;
+                position: static;
+                left: auto;
+                top: auto;
+                margin-bottom: 20px;
+                max-height: none;
+            }
+
+            .article-list {
+                margin-left: 0;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .article-item {
+                padding: 20px;
+            }
+
+            .article-title {
+                font-size: 22px;
+            }
+
+            .sort-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .sort-options {
+                flex-wrap: wrap;
+                width: 100%;
+            }
+
+            .sort-option {
+                font-size: 13px;
+                padding: 6px 12px;
+            }
+
+            .search-form {
+                flex-direction: column;
+            }
+
+            .back-to-top {
+                bottom: 20px;
+                right: 20px;
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+            }
+
+            .pagination {
+                gap: 4px;
+            }
+
+            .pagination a,
+            .pagination span.current,
+            .pagination span.disabled,
+            .pagination > span > a,
+            .pagination > span > span {
+                padding: 6px 10px;
+                font-size: 13px;
+                min-width: 32px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+                min-width: 240px;
+            }
+        }
+
+        /* 加载动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .article-item {
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .article-item:nth-child(1) { animation-delay: 0.1s; }
+        .article-item:nth-child(2) { animation-delay: 0.2s; }
+        .article-item:nth-child(3) { animation-delay: 0.3s; }
+        .article-item:nth-child(4) { animation-delay: 0.4s; }
+        .article-item:nth-child(5) { animation-delay: 0.5s; }
+    </style>
+</head>
+<body>
+<!-- 使用公共导航栏 -->
+<header th:replace="common/layout :: navbar"></header>
+
+<!-- 主容器（使用公共样式） -->
+<div class="container">
+    <!-- 搜索框 -->
+    <div class="search-box">
+        <form th:action="@{/search}" method="get" class="search-form">
+            <input type="text"
+                   name="keyword"
+                   th:value="${keyword != null ? keyword : ''}"
+                   placeholder="搜索文章标题、摘要、内容..."
+                   class="search-input">
+            <button type="submit" class="search-btn">
+                🔍 搜索
+            </button>
+        </form>
+        <div th:if="${searchMode != null && searchMode}" class="search-result-info">
+            搜索关键词：<strong th:text="${keyword}">关键词</strong>，找到 <strong th:text="${articlePage != null ? articlePage.total : (articles != null ? articles.size() : 0)}">0</strong> 篇文章
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- 分类侧边栏 -->
+        <aside class="sidebar">
+            <h3>📚 文章分类</h3>
+            <ul class="category-list">
+                <li>
+                    <a th:href="@{/(categoryId=${0}, page=${1}, size=${pageSize != null ? pageSize : 10}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}"
+                       th:classappend="${selectedCategoryId == 0} ? 'active'">
+                        <span>全部文章</span>
+                    </a>
+                </li>
+                <li th:each="category : ${categories}">
+                    <a th:href="@{/(categoryId=${category.id}, page=${1}, size=${pageSize != null ? pageSize : 10}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}"
+                       th:classappend="${selectedCategoryId == category.id} ? 'active'">
+                        <span th:text="${category.name}">分类名称</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- 文章列表 -->
+        <div class="article-list">
+            <!-- 排序选择器 -->
+            <div th:if="${articles != null && !articles.isEmpty()}" class="sort-controls">
+                <span class="sort-label">排序方式：</span>
+                <div class="sort-options">
+                    <!-- 按发布时间排序 -->
+                    <a th:href="@{/(categoryId=${selectedCategoryId != null ? selectedCategoryId : 0}, page=${1}, size=${pageSize != null ? pageSize : 10}, sortField='publishTime', sortOrder='desc')}"
+                       th:if="${searchMode == null || !searchMode}"
+                       th:classappend="${(sortField == null || sortField == 'publishTime') and (sortOrder == null || sortOrder == 'desc')} ? 'sort-option active' : 'sort-option'"
+                       class="sort-option">
+                        最新发布
+                    </a>
+                    <a th:href="@{/search(keyword=${keyword}, page=${1}, size=${pageSize != null ? pageSize : 10}, sortField='publishTime', sortOrder='desc')}"
+                       th:if="${searchMode != null and searchMode}"
+                       th:classappend="${(sortField == null || sortField == 'publishTime') and (sortOrder == null || sortOrder == 'desc')} ? 'sort-option active' : 'sort-option'"
+                       class="sort-option">
+                        最新发布
+                    </a>
+
+                    <a th:href="@{/(categoryId=${selectedCategoryId != null ? selectedCategoryId : 0}, page=${1}, size=${pageSize != null ? pageSize : 10}, sortField='publishTime', sortOrder='asc')}"
+                       th:if="${searchMode == null || !searchMode}"
+                       th:classappend="${sortField == 'publishTime' and sortOrder == 'asc'} ? 'sort-option active' : 'sort-option'"
+                       class="sort-option">
+                        最早发布
+                    </a>
+                    <a th:href="@{/search(keyword=${keyword}, page=${1}, size=${pageSize != null ? pageSize : 10}, sortField='publishTime', sortOrder='asc')}"
+                       th:if="${searchMode != null and searchMode}"
+                       th:classappend="${sortField == 'publishTime' and sortOrder == 'asc'} ? 'sort-option active' : 'sort-option'"
+                       class="sort-option">
+                        最早发布
+                    </a>
+
+                    <!-- 按浏览量排序 -->
+                    <a th:href="@{/(categoryId=${selectedCategoryId != null ? selectedCategoryId : 0}, page=${1}, size=${pageSize != null ? pageSize : 10}, sortField='viewCount', sortOrder='desc')}"
+                       th:if="${searchMode == null || !searchMode}"
+                       th:classappend="${sortField == 'viewCount' and sortOrder == 'desc'} ? 'sort-option active' : 'sort-option'"
+                       class="sort-option">
+                        最多浏览
+                    </a>
+                    <a th:href="@{/search(keyword=${keyword}, page=${1}, size=${pageSize != null ? pageSize : 10}, sortField='viewCount', sortOrder='desc')}"
+                       th:if="${searchMode != null and searchMode}"
+                       th:classappend="${sortField == 'viewCount' and sortOrder == 'desc'} ? 'sort-option active' : 'sort-option'"
+                       class="sort-option">
+                        最多浏览
+                    </a>
+
+                    <a th:href="@{/(categoryId=${selectedCategoryId != null ? selectedCategoryId : 0}, page=${1}, size=${pageSize != null ? pageSize : 10}, sortField='viewCount', sortOrder='asc')}"
+                       th:if="${searchMode == null || !searchMode}"
+                       th:classappend="${sortField == 'viewCount' and sortOrder == 'asc'} ? 'sort-option active' : 'sort-option'"
+                       class="sort-option">
+                        最少浏览
+                    </a>
+                    <a th:href="@{/search(keyword=${keyword}, page=${1}, size=${pageSize != null ? pageSize : 10}, sortField='viewCount', sortOrder='asc')}"
+                       th:if="${searchMode != null and searchMode}"
+                       th:classappend="${sortField == 'viewCount' and sortOrder == 'asc'} ? 'sort-option active' : 'sort-option'"
+                       class="sort-option">
+                        最少浏览
+                    </a>
+                </div>
+            </div>
+
+            <div th:if="${articles == null || articles.isEmpty()}" class="empty-state">
+                <h3 th:if="${searchMode != null && searchMode}">未找到相关文章</h3>
+                <h3 th:if="${searchMode == null || !searchMode}">暂无文章</h3>
+                <p th:if="${searchMode != null && searchMode}">
+                    没有找到包含 "<strong th:text="${keyword}">关键词</strong>" 的文章，请尝试其他关键词
+                </p>
+                <p th:if="${searchMode == null || !searchMode}">该分类下还没有已发布的文章</p>
+            </div>
+
+            <div th:each="article : ${articles}" class="article-item">
+                <h2 class="article-title">
+                    <a th:href="@{/articles/{id}(id=${article.id})}" th:text="${article.title}">文章标题</a>
+                </h2>
+
+                <div class="article-meta">
+                        <span title="作者">
+                            <span>👤</span>
+                            <span th:text="${article.authorName != null ? article.authorName : '未知'}">作者</span>
+                        </span>
+                    <span th:if="${article.publishTime != null}" title="发布时间">
+                            <span>🕒</span>
+                            <span th:text="${#temporals.format(article.publishTime, 'yyyy-MM-dd HH:mm')}">2025-12-25</span>
+                        </span>
+                    <span title="浏览量">
+                            <span>👁️</span>
+                            <span th:text="${article.viewCount != null ? article.viewCount : 0}">0</span>
+                        </span>
+                    <span title="点赞数">
+                            <span>👍</span>
+                            <span th:text="${article.likeCount != null ? article.likeCount : 0}">0</span>
+                        </span>
+                    <span title="收藏数">
+                            <span>⭐</span>
+                            <span th:text="${article.favoriteCount != null ? article.favoriteCount : 0}">0</span>
+                        </span>
+                </div>
+
+                <div class="article-summary" th:if="${article.summary != null}" th:text="${article.summary}">
+                    文章摘要...
+                </div>
+
+                <div class="article-footer">
+                    <span class="article-category" th:text="${article.categoryName != null ? article.categoryName : '未分类'}">分类</span>
+                    <div class="article-actions">
+                        <a th:href="@{/articles/{id}(id=${article.id})}" class="btn-read">阅读全文</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分页组件（放在文章列表容器内，占据整个宽度） -->
+            <div th:if="${articlePage != null && articlePage.getTotal() > 0}"
+                 style="width: 100%; margin-top: 30px;">
+                <div class="pagination">
+                    <!-- 搜索模式的分页 -->
+                    <div th:if="${searchMode != null && searchMode}">
+                        <!-- 上一页 -->
+                        <a th:if="${articlePage.hasPrevious()}"
+                           th:href="@{/search(keyword=${keyword}, page=${articlePage.current - 1}, size=${pageSize}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}"
+                           class="page-link">上一页</a>
+                        <span th:if="${!articlePage.hasPrevious()}" class="disabled">上一页</span>
+
+                        <!-- 页码（智能显示） -->
+                        <span th:if="${articlePage.pages <= 10}">
+                        <!-- 总页数小于等于10，显示所有页码 -->
+                        <span th:each="i : ${#numbers.sequence(1, articlePage.pages)}">
+                            <a th:if="${i != articlePage.current}"
+                               th:href="@{/search(keyword=${keyword}, page=${i}, size=${pageSize}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}"
+                               th:text="${i}">1</a>
+                            <span th:if="${i == articlePage.current}"
+                                  class="current"
+                                  th:text="${i}">1</span>
+                        </span>
+                    </span>
+                        <span th:if="${articlePage.pages > 10}">
+                        <!-- 总页数大于10，只显示部分页码 -->
+                            <!-- 显示前3页 -->
+                        <span th:if="${articlePage.current > 4}">
+                            <a th:href="@{/search(keyword=${keyword}, page=${1}, size=${pageSize}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}">1</a>
+                            <span th:if="${articlePage.current > 5}">...</span>
+                        </span>
+                            <!-- 显示当前页附近的页码 -->
+                        <span th:each="i : ${#numbers.sequence(articlePage.current > 4 ? articlePage.current - 2 : 1, articlePage.current + 2 < articlePage.pages ? articlePage.current + 2 : articlePage.pages)}">
+                            <a th:if="${i != articlePage.current}"
+                               th:href="@{/search(keyword=${keyword}, page=${i}, size=${pageSize}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}"
+                               th:text="${i}">1</a>
+                            <span th:if="${i == articlePage.current}"
+                                  class="current"
+                                  th:text="${i}">1</span>
+                        </span>
+                            <!-- 显示后3页 -->
+                        <span th:if="${articlePage.current < articlePage.pages - 3}">
+                            <span th:if="${articlePage.current < articlePage.pages - 4}">...</span>
+                            <a th:href="@{/search(keyword=${keyword}, page=${articlePage.pages}, size=${pageSize}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}"
+                               th:text="${articlePage.pages}">1</a>
+                        </span>
+                    </span>
+
+                        <!-- 下一页 -->
+                        <a th:if="${articlePage.hasNext()}"
+                           th:href="@{/search(keyword=${keyword}, page=${articlePage.current + 1}, size=${pageSize}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}"
+                           class="page-link">下一页</a>
+                        <span th:if="${!articlePage.hasNext()}" class="disabled">下一页</span>
+                    </div>
+
+                    <!-- 普通模式的分页 -->
+                    <div th:if="${searchMode == null || !searchMode}">
+                        <!-- 上一页 -->
+                        <a th:if="${articlePage.hasPrevious()}"
+                           th:href="@{/(categoryId=${selectedCategoryId}, page=${articlePage.current - 1}, size=${pageSize}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}"
+                           class="page-link">上一页</a>
+                        <span th:if="${!articlePage.hasPrevious()}" class="disabled">上一页</span>
+
+                        <!-- 页码（智能显示） -->
+                        <span th:if="${articlePage.pages <= 10}">
+                        <!-- 总页数小于等于10，显示所有页码 -->
+                        <span th:each="i : ${#numbers.sequence(1, articlePage.pages)}">
+                            <a th:if="${i != articlePage.current}"
+                               th:href="@{/(categoryId=${selectedCategoryId}, page=${i}, size=${pageSize}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}"
+                               th:text="${i}">1</a>
+                            <span th:if="${i == articlePage.current}"
+                                  class="current"
+                                  th:text="${i}">1</span>
+                        </span>
+                    </span>
+                        <span th:if="${articlePage.pages > 10}">
+                        <!-- 总页数大于10，只显示部分页码 -->
+                            <!-- 显示前3页 -->
+                        <span th:if="${articlePage.current > 4}">
+                            <a th:href="@{/(categoryId=${selectedCategoryId}, page=${1}, size=${pageSize}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}">1</a>
+                            <span th:if="${articlePage.current > 5}">...</span>
+                        </span>
+                            <!-- 显示当前页附近的页码 -->
+                        <span th:each="i : ${#numbers.sequence(articlePage.current > 4 ? articlePage.current - 2 : 1, articlePage.current + 2 < articlePage.pages ? articlePage.current + 2 : articlePage.pages)}">
+                            <a th:if="${i != articlePage.current}"
+                               th:href="@{/(categoryId=${selectedCategoryId}, page=${i}, size=${pageSize}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}"
+                               th:text="${i}">1</a>
+                            <span th:if="${i == articlePage.current}"
+                                  class="current"
+                                  th:text="${i}">1</span>
+                        </span>
+                            <!-- 显示后3页 -->
+                        <span th:if="${articlePage.current < articlePage.pages - 3}">
+                            <span th:if="${articlePage.current < articlePage.pages - 4}">...</span>
+                            <a th:href="@{/(categoryId=${selectedCategoryId}, page=${articlePage.pages}, size=${pageSize}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}"
+                               th:text="${articlePage.pages}">1</a>
+                        </span>
+                    </span>
+
+                        <!-- 下一页 -->
+                        <a th:if="${articlePage.hasNext()}"
+                           th:href="@{/(categoryId=${selectedCategoryId}, page=${articlePage.current + 1}, size=${pageSize}, sortField=${sortField != null ? sortField : 'publishTime'}, sortOrder=${sortOrder != null ? sortOrder : 'desc'})}"
+                           class="page-link">下一页</a>
+                        <span th:if="${!articlePage.hasNext()}" class="disabled">下一页</span>
+                    </div>
+
+                    <!-- 分页信息 -->
+                    <div class="pagination-info">
+                        共 <strong th:text="${articlePage.total}">0</strong> 篇文章，第 <strong th:text="${articlePage.current}">1</strong> / <strong th:text="${articlePage.pages}">1</strong> 页
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- 使用公共页脚 -->
+    <footer th:replace="common/layout :: footer"></footer>
+
+    <!-- 返回顶部按钮 -->
+    <button class="back-to-top" id="backToTop" aria-label="返回顶部">↑</button>
+
+    <!-- 首页交互脚本 -->
+    <script>
+        // 返回顶部功能
+        (function() {
+            const backToTopBtn = document.getElementById('backToTop');
+
+            // 监听滚动事件
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    backToTopBtn.classList.add('show');
+                } else {
+                    backToTopBtn.classList.remove('show');
+                }
+            });
+
+            // 点击返回顶部
+            backToTopBtn.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        })();
+
+        // 文章卡片进入视窗时的动画
+        (function() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // 为所有文章卡片添加观察
+            document.querySelectorAll('.article-item').forEach(item => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(20px)';
+                item.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(item);
+            });
+        })();
+    </script>
+</body>
+</html>
