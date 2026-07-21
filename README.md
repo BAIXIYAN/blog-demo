@@ -13,6 +13,9 @@
 ### 用户登录
 ![用户登录](screenshots/login.png)
 
+### 用户中心
+![用户中心](screenshots/user.png)
+
 ### 管理后台
 ![管理后台](screenshots/admin.png)
 
