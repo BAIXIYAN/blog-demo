@@ -2,6 +2,20 @@
 
 基于 Spring Boot 3 开发的个人博客系统，支持文章发布审核、评论、点赞、收藏、消息通知等功能。
 
+## 界面预览
+
+### 首页
+![首页](screenshots/home.png)
+
+### 文章详情
+![文章详情](screenshots/article-detail.png)
+
+### 用户登录
+![用户登录](screenshots/login.png)
+
+### 管理后台
+![管理后台](screenshots/admin.png)
+
 ## 技术栈
 
 | 技术 | 版本 | 说明 |
